@@ -12,6 +12,7 @@ if os.environ.get("FLASK_ENV") == "development":
 app = Flask(__name__)
 proxied = FlaskBehindProxy(app)
 app.config['SECRET_KEY'] = '7c9b91ed34545cd307fadd60f26be6ff'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 db = SQLAlchemy(app)
 
 class User(db.Model):
