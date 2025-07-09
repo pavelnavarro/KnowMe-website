@@ -1,4 +1,5 @@
-from flask import Flask, render_template, url_for, flash, redirect
+from flask import Flask, render_template, url_for, flash, redirect, request
+import git
 from forms import RegistrationForm
 from flask_debugtoolbar import DebugToolbarExtension
 from flask_behind_proxy import FlaskBehindProxy
@@ -7,6 +8,16 @@ proxied = FlaskBehindProxy(app)
 app.debug = True
 app.config['SECRET_KEY'] = '7c9b91ed34545cd307fadd60f26be6ff'
 toolbar = DebugToolbarExtension(app)
+
+@app.route("/update_server", methods=['POST'])
+def webhook():
+    if request.method == 'POST':
+        repo = git.Repo('/home/Knowmebetter/KnowMe-website')  # 👈 UPDATE to your real path
+        origin = repo.remotes.origin
+        origin.pull()
+        return 'Updated PythonAnywhere successfully', 200
+    else:
+        return 'Wrong event type', 400
 
 @app.route("/")
 @app.route("/home")
