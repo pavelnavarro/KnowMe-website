@@ -3,6 +3,7 @@ from flask import Flask, render_template, url_for, flash, redirect, request
 import git
 from forms import RegistrationForm
 from flask_behind_proxy import FlaskBehindProxy
+from flask_sqlalchemy import SQLAlchemy
 
 # Optional toolbar import only for development
 if os.environ.get("FLASK_ENV") == "development":
@@ -11,6 +12,20 @@ if os.environ.get("FLASK_ENV") == "development":
 app = Flask(__name__)
 proxied = FlaskBehindProxy(app)
 app.config['SECRET_KEY'] = '7c9b91ed34545cd307fadd60f26be6ff'
+db = SQLAlchemy(app)
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(20), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password = db.Column(db.String(60), nullable=False)
+
+    def __repr__(self):
+        return f"User('{self.username}', '{self.email}')"
+
+with app.app_context():
+    db.create_all()
+
 
 # Only enable DebugToolbar in development
 if os.environ.get("FLASK_ENV") == "development":
@@ -49,9 +64,16 @@ def success_page():
 @app.route("/register", methods=['GET', 'POST'])
 def register():
     form = RegistrationForm()
-    if form.validate_on_submit(): # checks if entries are valid
+    if form.validate_on_submit():
+        user = User(
+            username=form.username.data,
+            email=form.email.data,
+            password=form.password.data  # ⚠️ We'll hash this later
+        )
+        db.session.add(user)
+        db.session.commit()
         flash(f'Account created for {form.username.data}!', 'success')
-        return redirect(url_for('success_page')) # if so - send to home page
+        return redirect(url_for('success_page'))
     return render_template('register.html', title='Register', form=form, show_navbar=False)
 
 if __name__ == '__main__':
